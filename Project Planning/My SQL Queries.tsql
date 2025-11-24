@@ -1,0 +1,280 @@
+--------------------------------------------------------------------------------------------------
+----Quick preview
+
+SELECT*
+FROM Motorcar.Sales.Analysis
+
+---- Basic counts
+
+SELECT COUNT(*) AS total_rows
+FROM Motorcar.Sales.Analysis
+
+---Checking which car generate most revenue
+
+SELECT MAKE,
+       MODEL,
+       SUM(SELLINGPRICE) AS TOTAL_REVENUE,
+       COUNT(*) AS TOTAL_UNITS_SOLD
+FROM Motorcar.Sales.Analysis
+GROUP BY MAKE,
+         MODEL
+ORDER BY TOTAL_REVENUE DESC
+
+---4. Checking Average, Maximum and Minimum Selling price
+---Customer price preference
+
+SELECT YEAR,
+     Avg(sellingprice) AS Avg_Selling_Price,
+    Max(sellingprice) AS Max_Selling_Price,
+    Min(sellingprice)AS Min_Selling_Price,
+     COUNT (*) AS total_sales
+FROM Motorcar.Sales.Analysis, 
+Group by all
+ORDER by  YEAR DESC
+
+--- Counting number of sales per make
+SELECT MAKE,
+       COUNT(*) AS total_cars
+FROM Motorcar.Sales.Analysis 
+GROUP BY MAKE
+ORDER BY total_cars DESC;
+
+----Checking number of sales per color= Top top Colour sold
+
+SELECT COLOR,
+       COUNT(*) AS total_cars
+FROM Motorcar.Sales.Analysis 
+GROUP BY COLOR
+ORDER BY total_cars DESC
+LIMIT 10;
+
+----Checking the transmission preference and remove Nulls and no info
+SELECT 
+    TRANSMISSION,
+    COUNT(*) AS total_sales
+FROM Motorcar.Sales.Analysis
+WHERE TRANSMISSION IS NOT NULL
+GROUP BY TRANSMISSION
+ORDER BY total_sales DESC;
+
+----Customer Prefered Millage when buying
+
+SELECT YEAR,
+      Avg(ODOMETER) AS Avg_milage,
+     Max(ODOMETER) AS Max_milage,
+     Min(ODOMETER)AS Min_milage,
+     COUNT (*) AS total_sales
+FROM Motorcar.Sales.Analysis
+Group by all
+ORDER by  YEAR DESC
+
+--- checking Average price per state
+
+SELECT STATE,
+       ROUND(AVG(SELLINGPRICE), 2) AS avg_price
+FROM Motorcar.Sales.Analysis
+GROUP BY STATE
+ORDER BY avg_price DESC;
+
+--- Top 10 States
+SELECT STATE,
+       COUNT(*) AS total_sales
+FROM Motorcar.Sales.Analysis
+GROUP BY STATE
+ORDER BY total_sales DESC
+LIMIT 10;
+
+--- Seller with highest average selling price (only sellers with >10 sales)
+SELECT SELLER,
+       COUNT(*) AS total_sales,
+       ROUND(AVG(SELLINGPRICE), 2) AS avg_price
+FROM Motorcar.Sales.Analysis
+GROUP BY SELLER
+HAVING COUNT(*) > 10
+ORDER BY avg_price DESC;
+
+---Total Revenue
+
+SELECT SUM(IFNULL(sellingprice, 0)) as Total_Revenue
+FROM Motorcar.Sales.Analysis;
+
+-- Revenue by month
+SELECT SALE_MONTH, ROUND(SUM(TOTAL_REVENUE),2) AS MONTHLY_REVENUE
+FROM Motorcar.Sales.Analysis
+GROUP BY SALE_MONTH
+ORDER BY SALE_MONTH;
+
+--- Detailed timestamp breakdown: Year, Month
+
+SELECT try_to_timestamp(saledate, 'DY MON DD YYYY HH:MI:SS')
+AS New_SaleDate,
+YEAR (New_SaleDate) AS New_Year,
+MONTHNAME (New_SaleDate) As Month,
+TIME (New_SaleDate) As TIME,
+FROM Motorcar.Sales.Analysis;
+
+---Relationship between milage and price 
+
+SELECT
+  CASE 
+    WHEN odometer < 20000 THEN 'Low Mileage'
+    WHEN odometer BETWEEN 20000 AND 60000 THEN 'Medium Mileage'
+    ELSE 'High Mileage' 
+  END AS mileage_category,
+FROM Motorcar.Sales.Analysis
+GROUP BY mileage_category;
+
+
+---2) The relationship between price, mileage and year of manufaturers
+
+SELECT 
+    YEAR,
+    AVG(SELLINGPRICE) AS AVG_PRICE,
+   AVG(odometer) AS AVG_MILEAGE,
+    COUNT(*) AS TOTAL_UNITS
+FROM Motorcar.Sales.Analysis
+GROUP BY YEAR
+ORDER BY YEAR DESC;
+
+SELECT YEAR,
+       ODOMETER,
+      SELLINGPRICE
+FROM Motorcar.Sales.Analysis
+WHERE SELLINGPRICE IS NOT NULL
+  AND ODOMETER IS NOT NULL
+  AND YEAR IS NOT NULL
+  ORDER BY odometer DESC;
+
+---3) Regions with highest total car sales
+---Top 10 regions with total car sales
+
+SELECT State, 
+COUNT(*) AS total_sales
+FROM Motorcar.Sales.Analysis
+GROUP BY State
+ORDER BY Total_sales DESC
+LIMIT 10;
+
+
+---Relationship between milage and price
+
+SELECT 
+  CASE 
+    WHEN odometer < 20000 THEN 'Low Mileage'
+    WHEN odometer BETWEEN 20000 AND 60000 THEN 'Medium Mileage'
+    ELSE 'High Mileage' 
+  END AS mileage_category,
+  AVG(sellingprice) AS avg_price
+FROM Motorcar.Sales.Analysis
+GROUP BY mileage_category
+ORDER BY avg_price DESC;
+
+
+SELECT*
+FROM Motorcar.Sales.Analysis
+WHERE YEAR  IS NULL OR MAKE IS NULL OR MODEL IS NULL OR TRIM IS NULL OR
+BODY IS NULL OR TRANSMISSION IS NULL OR VIN IS NULL OR STATE IS NULL OR CONDITION  IS NULL OR ODOMETER IS NULL OR COLOR IS NULL OR INTERIOR IS NULL OR SELLER  IS NULL OR MMR IS NULL OR SELLINGPRICE IS NULL OR SALEDATE IS NULL;
+
+SELECT BODY,
+IFNULL (BODY, 'No_Data') AS BODY2
+FROM Motorcar.Sales.Analysis,
+======================================================================================
+SELECT 
+    -- Convert sale date
+    TRY_TO_TIMESTAMP(saledate, 'DY MON DD YYYY HH:MI:SS') AS New_SaleDate,
+    YEAR(TRY_TO_TIMESTAMP(saledate, 'DY MON DD YYYY HH:MI:SS')) AS New_Year,
+    MONTHNAME(TRY_TO_TIMESTAMP(saledate, 'DY MON DD YYYY HH:MI:SS')) AS Sale_Month,
+
+    -- Car details
+    MAKE,
+    MODEL,
+    YEAR AS Vehicle_Year,
+    STATE,
+    COLOR,
+    TRANSMISSION,
+
+    -- Price Aggregates
+    MAX(sellingprice) AS Max_Selling_Price,
+    MIN(sellingprice) AS Min_Selling_Price,
+    AVG(sellingprice) AS Avg_Selling_Price,
+
+    -- Mileage Aggregates
+    AVG(odometer) AS Avg_Mileage,
+    MAX(odometer) AS Max_Mileage,
+    MIN(odometer) AS Min_Mileage,
+
+    -- Revenue + Volume
+    COUNT(*) AS Total_Units_Sold,
+    SUM(IFNULL(sellingprice, 0)) AS Total_Revenue,
+
+    -- Price Bucket
+    CASE
+        WHEN sellingprice < 100000 THEN 'BUDGET'
+        WHEN sellingprice BETWEEN 100000 AND 220000 THEN 'MID_RANGE'
+        ELSE 'EXPENSIVE'
+    END AS Price_Bucket,
+
+    -- Mileage Category
+    CASE 
+        WHEN odometer < 20000 THEN 'Low Mileage'
+        WHEN odometer BETWEEN 20000 AND 60000 THEN 'Medium Mileage'
+        ELSE 'High Mileage' 
+    END AS Mileage_Category
+
+FROM Motorcar.Sales.Analysis
+
+GROUP BY 
+    TRY_TO_TIMESTAMP(saledate, 'DY MON DD YYYY HH:MI:SS'),
+    YEAR(TRY_TO_TIMESTAMP(saledate, 'DY MON DD YYYY HH:MI:SS')),
+    MONTHNAME(TRY_TO_TIMESTAMP(saledate, 'DY MON DD YYYY HH:MI:SS')),
+    MAKE,
+    MODEL,
+    YEAR,
+    STATE,
+    COLOR,
+    TRANSMISSION,
+    CASE
+        WHEN sellingprice < 100000 THEN 'BUDGET'
+        WHEN sellingprice BETWEEN 100000 AND 220000 THEN 'MID_RANGE'
+        ELSE 'EXPENSIVE'
+    END,
+    CASE 
+        WHEN odometer < 20000 THEN 'Low Mileage'
+        WHEN odometer BETWEEN 20000 AND 60000 THEN 'Medium Mileage'
+        ELSE 'High Mileage'
+    END
+
+ORDER BY Total_Revenue DESC;
+
+---My Aggregated/Main Query
+
+
+SELECT try_to_timestamp(saledate, 'DY MON DD YYYY HH:MI:SS')
+AS New_SaleDate,
+YEAR (New_SaleDate) AS New_Year,
+MONTHNAME (New_SaleDate) As Month,
+MAKE,
+MODEL,
+Max(sellingprice) AS max_selling_price,
+MIN(sellingprice) AS min_selling_price,
+AVG(sellingprice) AS Avg_selling_price,
+Avg(ODOMETER) AS Avg_milage,
+Max(ODOMETER) AS Max_milage,
+Min(ODOMETER)AS Min_milage,
+COUNT (*) AS total_sales,
+SUM(IFNULL(sellingprice, 0)) as Total_Revenue,
+CASE
+        WHEN SELLINGPRICE < 100000 THEN 'BUDGET'
+        WHEN SELLINGPRICE BETWEEN 100000 AND 220000 THEN 'MID_RANGE'
+        ELSE 'Expensive'
+    END AS PRICE_Buckets,
+    CASE 
+    WHEN odometer < 20000 THEN 'Low Mileage'
+    WHEN odometer BETWEEN 20000 AND 60000 THEN 'Medium Mileage'
+    ELSE 'High Mileage' 
+  END AS mileage_category,
+FROM Motorcar.Sales.Analysis
+GROUP BY ALL; 
+
+
+
